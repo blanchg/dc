@@ -4,6 +4,7 @@ var log = hasConsole?console.log.bind(console):print;
 if (typeof require == "function") {
 	browser = false;
 	var Combinatorics = require('./combinatorics.js').Combinatorics;
+	var Parallel = require('paralleljs');
 }
 
 // 3..27
