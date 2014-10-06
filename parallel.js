@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
 	var isCommonJS = typeof module !== 'undefined' && module.exports;
 	var isNode = !(typeof window !== 'undefined' && this === window);
 	var setImmediate = setImmediate || function (cb) {

@@ -4,7 +4,7 @@ var log = hasConsole?console.log.bind(console):print;
 if (typeof require == "function") {
 	browser = false;
 	var Combinatorics = require('./combinatorics.js').Combinatorics;
-	var Parallel = require('paralleljs');
+	var Parallel = require('./parallel.js');
 }
 
 // 3..27
@@ -21,7 +21,7 @@ function generateGCD() {
 	for (var i = 2; i <= max; i++) {
 		for (var j = i; j < max; j++) {
 			var mul = i * j;
-			if (mul > size)
+			if (mul > global.p.size)
 				break;
 			// log(i + "*" + j + " = " + mul);
 			addDenominator(denoms[mul], i);
@@ -38,7 +38,7 @@ function generateGCD() {
 
 	for (var i = 1; i <= max; i++) {
 		for (var j = 1; j < max; j++) {
-			gcdDict[index(i,j)] = findGCD(i,j);
+			global.p.gcdDict[index(i,j)] = findGCD(i,j);
 		}
 	}
 };
@@ -71,7 +71,7 @@ function addDenominator(denom, i) {
 };
 
 function lookupGCD(a, b) {
-	return gcdDict[index(a,b)];
+	return global.p.gcdDict[index(a,b)];
 }
 
 function calcDistance(a, b) {
@@ -82,6 +82,7 @@ function calcDistance(a, b) {
 	// var by = Math.floor(b / width);
 	// var bx = b - (by * width);
 
+	var width = global.p.width;
 	var ax = a % width;
 	var ay = (a - ax) / width;
 	var bx = b % width;
@@ -103,9 +104,9 @@ function score(d) {
 
 	// log(index);
 
-	for (var a = 1; a < size; a++) {
+	for (var a = 1; a < global.p.size; a++) {
 		var ia = index[a];
-		for (var b = a + 1; b <= size; b++) {
+		for (var b = a + 1; b <= global.p.size; b++) {
 			var gcd = lookupGCD(a, b);
 			var ib = index[b];
 			// log(a + " = " + ia + ", " + b + " = " + ib);
@@ -135,8 +136,42 @@ function format(d) {
 
 function generateInput() {
 	var result = [];
-	for (var i = 1; i <= size; i++) {
+	for (var i = 1; i <= global.p.size; i++) {
 		result[i-1] = i;
+	};
+	return result;
+}
+
+function generateValidIndex() {
+	// [0, 1, 4]
+	var result = [];
+	var w2 = Math.ceil(width / 2) - 1;
+	var h2 = Math.floor(height / 2);
+	var h2ceil = Math.ceil(height / 2);
+	var i = 0;
+	for (var y = 0; y < height; y++) {
+		for (var x = 0; x < width; x++) {
+			if (y < h2 && x <= w2) {
+				result.push(i);
+			}
+			i++;
+		};
+	};
+	if (h2 != h2ceil)
+		result.push(h2 * width + w2);
+	return result;
+}
+
+function generateValidTwoIndex() {
+	var result = [];
+	var i = 0;
+	for (var y = 0; y < height; y++) {
+		for (var x = 0; x < width; x++) {
+			if (x >= y) {
+				result.push(i);
+			}
+			i++;
+		};
 	};
 	return result;
 }
@@ -147,6 +182,14 @@ var width = 4;
 var height = 4;
 var size = width * height;//size*size;
 var max = size * size;
+
+global.p = {
+	size: size,
+	gcdDict: gcdDict,
+	width: width,
+	height: height,
+	max: max
+}
 
 generateGCD();
 
@@ -159,34 +202,91 @@ generateGCD();
 
 function go() {
 
-var input = generateInput();
-log("Input: ", input);
-var cmb = Combinatorics.permutation(input);
-log("Length: " + cmb.length);
-var highestScore = 0;
-var lowestScore = 1000000;
-var highest = null;
-var lowest = null;
-while(a = cmb.next()) {
-	var s = score(a);
-	if (s > highestScore) {
-		highestScore = s;
-		highest = a;
-		log("H: " + s, format(a));
+	var input = generateInput();
+	log("Input: ", input);
+	var cmb = Combinatorics.permutation(input);
+	log("Length: " + cmb.length);
+	var highestScore = 0;
+	var lowestScore = 1000000;
+	var highest = null;
+	var lowest = null;
+	var parallel = false;
+	var validIndex = generateValidIndex();
+	var validTwoIndex = generateValidTwoIndex();
+	var processed = 0;
+	var start = new Date().getTime();
+
+	while(a = cmb.next()) {
+
+		if (validIndex.indexOf(a.indexOf(1)) == -1)
+			continue;
+		var valid = true;
+		var s2 = validTwoIndex.length;
+		for (var i = 2; i <= s2; i++) {
+			if (validTwoIndex.indexOf(a.indexOf(i)) == -1) {
+				valid = false;
+				break;
+			}
+		};
+		if (!valid)
+			continue;
+		// if (validTwoIndex.indexOf(a.indexOf(2)) == -1)
+		// 	continue;
+		// if (validTwoIndex.indexOf(a.indexOf(3)) == -1)
+		// 	continue;
+		// if (validTwoIndex.indexOf(a.indexOf(4)) == -1)
+		// 	continue;
+		// if (validTwoIndex.indexOf(a.indexOf(5)) == -1)
+		// 	continue;
+		// if (validTwoIndex.indexOf(a.indexOf(6)) == -1)
+		// 	continue;
+
+		processed++;
+		// if (parallel) {
+		// 	var job = new Parallel(
+		// 		{problem:a,score:0}, {
+		// 		env: global.p,
+		// 		envNamespace: 'p'
+		// 	}).require(score, lookupGCD, calcDistance, index).spawn(function(data) {
+		// 		data.score = score(data.problem);
+		// 		return data;
+		// 	}).then(function(data) {
+		// 		var s = data.score;
+		// 		var a = data.problem;
+		// 		if (s > highestScore) {
+		// 			highestScore = s;
+		// 			highest = a;
+		// 			log("H: " + s, format(a));
+		// 		}
+		// 		if (s < lowestScore) {
+		// 			lowestScore = s;
+		// 			lowest = a;
+		// 			log("L: " + s, format(a));
+		// 		}	
+		// 	});
+		// } else {
+			var s = score(a);
+			if (s > highestScore) {
+				highestScore = s;
+				highest = a;
+				log("H: " + s, format(a));
+			}
+			if (s < lowestScore) {
+				lowestScore = s;
+				lowest = a;
+				log("L: " + s, format(a));
+			}
+		// }
 	}
-	if (s < lowestScore) {
-		lowestScore = s;
-		lowest = a;
-		log("L: " + s, format(a));
-	}
-}
 
-log("Highest: " + highestScore);
-log(format(highest));
+	log("Highest: " + highestScore);
+	log(format(highest));
 
-log("Lowest: " + lowestScore);
-log(format(lowest));
+	log("Lowest: " + lowestScore);
+	log(format(lowest));
 
+	log("Processed: " + processed);
+	log("Took: " + (new Date().getTime() - start) + " ms");
 }
 
 if (!browser || !hasConsole)
