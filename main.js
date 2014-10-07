@@ -94,28 +94,40 @@ function calcDistance(a, b) {
 	return result;
 }
 
-function score(d) {
+function score(d, debug) {
 	var result = 0;
 	var index = [-1];
 	for (var i = 0; i < d.length; i++) {
-		// log(d[i] + " at " + i);
+		// !debug|| log(d[i] + " at " + i);
 		index[d[i]] = i;
 	};
 
-	// log(index);
+	// !debug||log(index);
+	var out;
+	!debug||(out = []);
+	var size = global.p.size;
 
-	for (var a = 1; a < global.p.size; a++) {
+	if (debug) {
+		for (var a = 0; a < size; a++) {
+			out[a] = 0;
+		}
+	}
+
+	for (var a = 1; a < size; a++) {
 		var ia = index[a];
-		for (var b = a + 1; b <= global.p.size; b++) {
+		for (var b = a + 1; b <= size; b++) {
 			var gcd = lookupGCD(a, b);
 			var ib = index[b];
-			// log(a + " = " + ia + ", " + b + " = " + ib);
+			// !debug|| log(a + " = " + ia + ", " + b + " = " + ib);
 			var dist = calcDistance(ia, ib);
 			var dab = gcd * dist;
-			// log(a + "|" + b + "|" + gcd + "|" + dist + "|" + dab);
+			!debug|| (out[ia] += dab);
+			!debug|| (out[ib] += dab);
 			result += dab;
 		};
 	};
+
+	!debug||log("" + out.join(","));
 
 	return result;
 }
@@ -202,7 +214,10 @@ generateGCD();
 
 function go() {
 
-	var input = generateInput();
+	var input;
+
+	// input = generateInput();
+	input = [1,9,7,11,10,3,6,14,5,15,12,8,13,2,4,16];
 	log("Input: ", input);
 	var cmb = Combinatorics.permutation(input);
 	log("Length: " + cmb.length);
@@ -215,30 +230,20 @@ function go() {
 	var validTwoIndex = generateValidTwoIndex();
 	var processed = 0;
 	var start = new Date().getTime();
-
+	var a = null;
 	while(a = cmb.next()) {
-
-		if (validIndex.indexOf(a.indexOf(1)) == -1)
-			continue;
-		var valid = true;
-		var s2 = validTwoIndex.length;
-		for (var i = 2; i <= s2; i++) {
-			if (validTwoIndex.indexOf(a.indexOf(i)) == -1) {
-				valid = false;
-				break;
-			}
-		};
-		if (!valid)
-			continue;
-		// if (validTwoIndex.indexOf(a.indexOf(2)) == -1)
+    // while (a == null) {
+		// if (validIndex.indexOf(a.indexOf(1)) == -1)
 		// 	continue;
-		// if (validTwoIndex.indexOf(a.indexOf(3)) == -1)
-		// 	continue;
-		// if (validTwoIndex.indexOf(a.indexOf(4)) == -1)
-		// 	continue;
-		// if (validTwoIndex.indexOf(a.indexOf(5)) == -1)
-		// 	continue;
-		// if (validTwoIndex.indexOf(a.indexOf(6)) == -1)
+		// var valid = true;
+		// var s2 = validTwoIndex.length;
+		// for (var i = 2; i <= s2; i++) {
+		// 	if (validTwoIndex.indexOf(a.indexOf(i)) == -1) {
+		// 		valid = false;
+		// 		break;
+		// 	}
+		// };
+		// if (!valid)
 		// 	continue;
 
 		processed++;
@@ -270,23 +275,30 @@ function go() {
 				highestScore = s;
 				highest = a;
 				log("H: " + s, format(a));
+				log(a.join(","));
 			}
 			if (s < lowestScore) {
 				lowestScore = s;
 				lowest = a;
 				log("L: " + s, format(a));
+				log(a.join(","));
 			}
 		// }
+
+		if (highest)
+			break;
 	}
 
 	log("Highest: " + highestScore);
-	log(format(highest));
+	log("  " + format(highest));
 
 	log("Lowest: " + lowestScore);
-	log(format(lowest));
+	log("  " + format(lowest));
 
 	log("Processed: " + processed);
 	log("Took: " + (new Date().getTime() - start) + " ms");
+
+	log(score(highest, true));
 }
 
 if (!browser || !hasConsole)
