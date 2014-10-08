@@ -25,23 +25,23 @@
 			var light = new THREE.AmbientLight(0x222222);
 			scene.add(light);
 
-			camera.position.z = 5;
-			camera.position.y = 8;
+			camera.position.z = 7;
+			camera.position.y = 10;
 			camera.position.x = 0;
 			camera.lookAt(new THREE.Vector3(0,0,0));
 
-			var input = "1,9,7,11,10,3,6,14,5,15,12,8,13,2,4,16".split(")").join("").split("(").join("").split(" ").join("").split(",");
-			var weight = [112,104,92,112,146,58,84,122,88,76,90,114,112,110,110,154];
+			var input = "(139,149,167,29,58,145,133,5,95,129,19,43,163), (97,47,94,49,87,35,116,57,38,25,125,86,151), (1,7,141,147,98,105,15,114,75,76,10,155,31), (79,158,85,21,63,28,70,45,30,150,50,93,67), (103,119,14,27,42,126,135,140,90,60,152,124,62), (17,51,153,102,81,162,84,168,56,120,100,20,134), (3,34,9,68,136,165,54,108,112,144,80,40,4), (83,166,77,154,55,110,18,36,72,48,160,64,128), (73,146,161,99,66,132,88,12,24,130,96,32,2), (71,142,33,115,138,44,117,6,156,65,16,8,118), (137,11,121,69,22,92,91,78,52,104,123,164,59), (157,101,23,46,159,143,39,26,111,148,122,82,41), (113,107,131,89,109,53,106,13,169,74,37,61,127)".split(")").join("").split("(").join("").split(" ").join("").split(",");
+			// var weight = [112,104,92,112,146,58,84,122,88,76,90,114,112,110,110,154];
 
-			var weightedInput = input.map(function(val, i) { return val * weight[i];});
+			// var weightedInput = input.map(function(val, i) { return val * weight[i];});
 
-			var maxWeight = Math.max.apply(null, weight);
+			// var maxWeight = Math.max.apply(null, weight);
 			var maxInput = Math.max.apply(null, input);
-			var maxWeightedInput = Math.max.apply(null, weightedInput);
+			// var maxWeightedInput = Math.max.apply(null, weightedInput);
 			var heightScale = 4 / maxInput;
-			var weightedHeightScale = 4 / maxWeightedInput;
-			var colorScale = 255 / maxWeightedInput;
-			var cs = 255 / maxWeight;
+			// var weightedHeightScale = 4 / maxWeightedInput;
+			// var colorScale = 255 / maxWeightedInput;
+			// var cs = 255 / maxWeight;
 
 			var cubes = [];
 			var gap = 1.1;
@@ -50,39 +50,39 @@
 			var size = input.length;
 			var width = Math.sqrt(size);
 			var offset = -(width / 2) * gap + 0.5;
+			var material = new THREE.MeshLambertMaterial({color: 0xFFFFFF});
 			for (var i = 0; i < size; i++) {
-				var material = new THREE.MeshLambertMaterial({color: (Math.round(weightedInput[i] * colorScale)<<16) + 0xFFFF});
 				var cube = new THREE.Mesh(geometry, material);
 				group.add(cube);
 				cube.position.x = offset + i % width * gap;
 				// cube.scale.y = input[i] * 0.1;
-				cube.scale.y = weightedInput[i] * weightedHeightScale;
+				cube.scale.y = input[i] * heightScale;
 				cube.position.y = cube.scale.y * 0.5;
 				cube.position.z = offset + Math.floor(i / width) * gap;
 				cubes[i] = cube;
 			};
 
-			var originalGroup = new THREE.Object3D();
-			scene.add(originalGroup);
-			for (var i = 0; i < size; i++) {
-				var material = new THREE.MeshLambertMaterial({color: 0xFFFF00 + Math.round(weight[i] * cs)});
-				var cube = new THREE.Mesh(geometry, material);
-				originalGroup.add(cube);
-				cube.position.x = offset + i % width * gap;
-				cube.scale.y = input[i] * heightScale;
-				// cube.scale.y = input[i] * heightScale;
-				cube.position.y = cube.scale.y * 0.5;
-				cube.position.z = offset + Math.floor(i / width) * gap;
-			};
+			// var originalGroup = new THREE.Object3D();
+			// scene.add(originalGroup);
+			// for (var i = 0; i < size; i++) {
+			// 	var material = new THREE.MeshLambertMaterial({color: 0xFFFF00 + Math.round(weight[i] * cs)});
+			// 	var cube = new THREE.Mesh(geometry, material);
+			// 	originalGroup.add(cube);
+			// 	cube.position.x = offset + i % width * gap;
+			// 	cube.scale.y = input[i] * heightScale;
+			// 	// cube.scale.y = input[i] * heightScale;
+			// 	cube.position.y = cube.scale.y * 0.5;
+			// 	cube.position.z = offset + Math.floor(i / width) * gap;
+			// };
 
-			originalGroup.position.x = size/4;
-			group.position.x = -size/4;
+			// originalGroup.position.x = size/4;
+			// group.position.x = -size/4;
 
 			var render = function () {
 				requestAnimationFrame(render);
 
 				group.rotation.y += 0.01;
-				originalGroup.rotation.y += 0.01;
+				// originalGroup.rotation.y += 0.01;
 
 				renderer.render(scene, camera);
 			};
