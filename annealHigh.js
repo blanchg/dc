@@ -226,8 +226,9 @@ function generateValidTwoIndex() {
 	return result;
 }
 
+
 function mutate(a) {
-	var best = a;
+	var best = a.concat();
 	var b = a.concat();
 	var bestScore = 0;
 	for (var i = 0; i < size; i++) {
@@ -239,16 +240,16 @@ function mutate(a) {
 			{
 				// Only 
 				bestScore = s;
-				best = b;
+				// best = b;
 				for (var k = 0; k < size; k++) {
-					b[k] = a[k];
+					best[k] = b[k];
+					// b[k] 
 				};
 				// b = a.concat();
-			} else {
-				// reset
-				b[i] = a[i];
-				b[j] = a[j];
 			}
+			// reset
+			b[i] = a[i];
+			b[j] = a[j];
 		};
 	};
 
@@ -299,9 +300,9 @@ function findBest(input, bestScore) {
 	var a = input;
 	var s = score(a);
 	while(true) {
-		start = new Date().getTime();
+		// start = new Date().getTime();
 		var s2 = mutate(a);
-		log("Took: " + (new Date().getTime() - start) + " ms to mutate");
+		// log("Took: " + (new Date().getTime() - start) + " ms to mutate");
 		if (s2.bestScore <= s)
 			break;
 		s = s2.bestScore;

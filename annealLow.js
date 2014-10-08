@@ -227,7 +227,7 @@ function generateValidTwoIndex() {
 }
 
 function mutate(a) {
-	var best = a;
+	var best = a.concat();
 	var b = a.concat();
 	var bestScore = Number.MAX_VALUE;
 	for (var i = 0; i < size; i++) {
@@ -239,16 +239,16 @@ function mutate(a) {
 			{
 				// Only 
 				bestScore = s;
-				best = b;
+				// best = b;
 				for (var k = 0; k < size; k++) {
-					b[k] = a[k];
+					best[k] = b[k];
+					// b[k] 
 				};
 				// b = a.concat();
-			} else {
-				// reset
-				b[i] = a[i];
-				b[j] = a[j];
 			}
+			// reset
+			b[i] = a[i];
+			b[j] = a[j];
 		};
 	};
 
@@ -299,9 +299,9 @@ function findBest(input, bestScore) {
 	var a = input;
 	var s = score(a);
 	while(true) {
-		start = new Date().getTime();
+		// start = new Date().getTime();
 		var s2 = mutate(a);
-		log("Took: " + (new Date().getTime() - start) + " ms to mutate");
+		// log("Took: " + (new Date().getTime() - start) + " ms to mutate");
 		if (s2.bestScore >= s)
 			break;
 		s = s2.bestScore;
@@ -326,6 +326,13 @@ function findBest(input, bestScore) {
 // log(calcDistance(5, 3));
 
 function go() {
+
+	// var testScore = score([5,15,7,11,10,3,6,1,16,12,9,14,8,4,2,13]);
+	// log("Testing: " + testScore);
+	// if (testScore != 860) {
+	// 	log("ERROR: " + testScore + " should be 860");
+	// 	return;
+	// }
 
 	var input;
 
