@@ -298,8 +298,6 @@ function findBest(input, bestScore) {
 
 	var a = input;
 	var s = score(a);
-	log("Starting: " + s, format(a));
-	fs.appendFileSync('low' + n + '.txt', '\nStarting\n' + s + '\n' + format(a));
 	while(true) {
 		start = new Date().getTime();
 		var s2 = mutate(a);
@@ -344,6 +342,9 @@ function go() {
 
 	var best = input;
 	var bestScore = score(best);
+
+	log("Starting: " + bestScore, format(best));
+	fs.appendFileSync('low' + n + '.txt', '\nStarting\n' + bestScore + '\n' + format(best));
 
 	while (true) {
 		var result = findBest(input, bestScore);
