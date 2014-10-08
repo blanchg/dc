@@ -1,9 +1,10 @@
 var browser = true;
 var hasConsole = typeof console == "object";
 var log = hasConsole?console.log.bind(console):print;
+var fs = {appendFileSync: function() {}};
 if (typeof require == "function") {
 	browser = false;
-	var fs = require('fs');
+	fs = require('fs');
 	// var Combinatorics = require('./combinatorics.js').Combinatorics;
 	// var Parallel = require('./parallel.js');
 }
@@ -231,6 +232,10 @@ var height = n;
 var size = width * height;//size*size;
 var max = size * size;
 
+if (typeof global != "object") {
+	var global = {};
+}
+
 global.p = {
 	size: size,
 	gcdDict: gcdDict,
@@ -278,11 +283,11 @@ function go() {
 
 	input = generateRandomInput();
 	// input = [1,9,7,11,10,3,6,14,5,15,12,8,13,2,4,16];
-	log("Input: ", input);
-	var validIndex = generateValidIndex();
-	var validTwoIndex = generateValidTwoIndex();
-	var processed = 0;
-	var start = new Date().getTime();
+	log("Input: ", input.join(","));
+	// var validIndex = generateValidIndex();
+	// var validTwoIndex = generateValidTwoIndex();
+	// var processed = 0;
+	// var start = new Date().getTime();
 
 	var best = input;
 	var bestScore = score(best);
@@ -297,9 +302,9 @@ function go() {
 		input = generateRandomInput();
 	}
 
-	log("Took: " + (new Date().getTime() - start) + " ms");
+	// log("Took: " + (new Date().getTime() - start) + " ms");
 
-	log(score(a, true));
+	// log(score(a, true));
 }
 
 if (!browser || !hasConsole)
