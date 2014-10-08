@@ -8,7 +8,8 @@ if (typeof require == "function") {
 	// var Combinatorics = require('./combinatorics.js').Combinatorics;
 	// var Parallel = require('./parallel.js');
 	var LineByLineReader = require('line-by-line');
-
+	var request = require('request');
+	var cheerio = require('cheerio');
 }
 
 // 3..27
@@ -302,9 +303,72 @@ function findBestScoreSoFar(bestScore, cb) {
 	});
 }
 
+function record(score, input) {
+
+	var result = format(input);
+	// if (typeof fs == "object") {
+	// 	fs.appendFileSync(filename, '\n' + score + '\n' + result);
+	// }
+	// log("R: " + (typeof request));
+	if (typeof request == "function") {
+		request({
+			method: "POST",
+			url:"http://azspcs.net/Contest/DelacorteNumbers/Enter",
+			// auth: {
+			// 	user: "blanchard.glen@gmail.com",
+			// 	pass: "tester44",
+			// 	sendImmediately: true
+			// },
+			headers: {
+				Cookie:"ASP.NET_SessionId=i3ofuyryadc3xz45ydnex445; UserName=blanchard.glen@gmail.com; SessionCode=d790d606-f9bd-4535-a01d-0f3055aa3c46;"
+			},
+			form: {
+				rawText: result,
+				submit: "Submit Entry"
+			},
+			proxy: "http://blancgp:Tester999@proxy.cat.com:80"
+		},
+		function (err, response, body) {
+			if (err) {
+				log("Post error: ", err);
+				setTimeout(checkRecord, 30000).unref();
+			} else {
+				var $ = cheerio.load(body, {normalizeWhitespace: true});
+				log($(path).text());
+				lastPostedScore = score;
+				setTimeout(checkRecord, 60000).unref();
+			}
+		});
+	}
+}
+
+var lastPostedScore = 0;
+
+var best = null;
+var bestScore = 0;
+var path = "#contentContainer > fieldset > table:nth-child(3)"
+
+function checkRecord() {
+	// log("Checking if should record: " + lastPostedScore + " == " + bestScore)
+	if (lastPostedScore == bestScore) {
+		setTimeout(checkRecord, 10000).unref();
+		return;
+	}
+
+	record(bestScore, best);
+}
+
 function go() {
 
 	var input;
+	
+	// var $ = cheerio.load('<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <html xmlns="http://www.w3.org/1999/xhtml"> <head><title> AZsPCs - Delacorte Numbers - Submit an Entry </title><link href="../../Content/Content.css" rel="stylesheet" type="text/css" /><link href="../../Content/Master.css" rel="stylesheet" type="text/css" /> <style type="text/css"> #header a:link,  #header a:visited  {text-decoration:none;} #header a:hover, #header a:active   {text-decoration:underline;} a.country:link,  a.country:visited  {text-decoration:none;} a.country:hover, a.country:active   {text-decoration:underline;} #footer a:link,  #footer a:visited  {text-decoration:none;} #footer a:hover, #footer a:active   {text-decoration:underline;} #landmarks {font-family: Arial, Helvetica, sans-serif; font-size: 110%; padding: 5px 5px 5px 5px; font-weight:bold; } #landmarks a:link,  #landmarks a:visited  {text-decoration:none;} #landmarks a:hover, #landmarks a:active   {text-decoration:underline;} </style> <script language="javascript" type="text/javascript"> function noSpam(name,domain) {var location = "mailto:" + name + "@" + domain; document.location = location; } </script> <script type="text/javascript"> function setFocus(){if(document.forms.length == 0) return; for(var i = 0; i < document.forms[0].length; i++){var element = document.forms[0][i]; if (!element.disabled) {switch (element.type) {case "text" : element.focus(); return; case "textarea" : element.focus(); return; case "checkbox" : element.focus(); return; case "radio" : element.focus(); return; case "file" : element.focus(); return; case "password" : element.focus(); return; case "select-one" : element.focus(); return; case "select-multiple" : element.focus(); return; } } } } </script> </head> <body onload="setFocus()"> <div class="page"> <div id="header"> <img id="logo" alt="Logo" src="/Content/4circles.gif" /> <span id="title">&nbsp; Al Zimmermann&#39;s Programming Contests</span> <div id="welcome"> Welcome Back, Glen Blanchard <br /> <a href="/Account/MyAccount">My Account</a> | <a href="/Account/LogOff?returnUrl=%2FContest%2FDelacorteNumbers%2FEnter">Log Off</a> </div> </div> <div id="main"> <div id="landmarks"> <a href="/">Home</a> &gt; Delacorte Numbers &gt; <a href="/Contest/DelacorteNumbers/Enter">Submit an Entry</a> </div> <div id="contentContainer"> <link href="../../Content/Content.css" rel="stylesheet" type="text/css" /> <div class="centerAlign"> <h2> Delacorte Numbers</h2> <table class="contestDates"> <tr> <td> Ends: </td> <td> 4&nbsp;Jan&nbsp;2015&nbsp;02:00 </td> </tr> <tr> <td> Now: </td> <td> 9&nbsp;Oct&nbsp;2014&nbsp;09:18 </td> </tr> </table> <p /> </div> <div align="center"> <table id="subMenu"> <tr> <td class="notSelected"> <a href="/Contest/DelacorteNumbers">Description</a> </td> <td class="selected"> Submit An Entry </td> <td class="notSelected"> <a href="/Contest/DelacorteNumbers/Standings">Standings</a> </td> </tr> </table> </div> <p> </p> <!-- CONTEST ENDED MESSAGE --> <!-- CHECK USER STATUS BEFORE ALLOWING ENTRY --> <!-- SHOW RESULTS OF LATEST ENTRY --> <fieldset> <legend>Your entry was accepted</legend> <table class="withBorder"> <tr> <th>Problem</th> <th>Raw Score</th> <th> Canonical Representation of Solution </th> </tr> <tr> <td style="text-align:center">3&nbsp;x&nbsp;3</td> <td style="text-align:center">180</td> <td> (2,3,8), (9,1,7), (4,5,6) </td> </tr> </table> <table style="margin-left: 30px"> <tr> <td><label><b>Your total score:&nbsp;&nbsp;</b></label></td> <td>13.506</td> </tr> <tr> <td><label><b>Your rank in the standings:&nbsp;&nbsp;</b></label></td> <td>73</td> </tr> </table> </fieldset> <br /> <!-- ENTRY FORM --> <form action="/Contest/DelacorteNumbers/Enter" method="post"> <div> <br/> <fieldset> <legend>Enter your solutions here</legend> <table style="width:100%"> <tr> <td style="padding-right:12px"> <textarea name="rawText" rows="10" cols="80" style="width:100%"></textarea> </td> </tr> <tr> <td colspan="2" style="text-align:center"> <input type="submit" name="visualize" value="Visualize Entry" /> <input type="submit" name="submit" value="Submit Entry" /> </td> </tr> </table> </fieldset> </div> </form> </div> </div> <div id="footer"> <a href="/">Home</a> | <a href="/Home/ContactUs">Contact Us</a> | <a href="http://groups.yahoo.com/group/AlZimmermannsProgrammingContests/"target="_blank" title="Yahoo! Groups - opens in new window">Discussion Group</a> </div> </div> </body> </html>');
+	//  //> fieldset > table:nth-child(3) > tbody > tr:nth-child(1) > td:nth-child(2)
+	
+	// var path = "#contentContainer > fieldset > table:nth-child(3)"
+	// log("Path " + path + " = " + $(path).text());
+	
+	// return;
 
 	input = generateRandomInput();
 	log("Input: ", input.join(","));
@@ -312,8 +376,12 @@ function go() {
 	log("GCD:", findGCD(16, 8, true));
 	// return;
 
-	var best = input;
-	var bestScore = score(best);
+	best = input;
+	bestScore = score(best);
+
+	// record(bestScore, best);
+	// return;
+
 	findBestScoreSoFar(bestScore, function(fileBestScore) {
 		if (bestScore == fileBestScore) {
 			log("Starting: " + bestScore, format(best));
@@ -323,9 +391,14 @@ function go() {
 			log("Resuming with best score: " + bestScore);
 		}
 
+		lastPostedScore = bestScore;
 
 
-		while (true) {
+		log("Creating record timer");
+		setTimeout(checkRecord, 10000).unref();
+		// timer.unref();
+
+		function processInput(dontUseProcess) {
 			var result = findBest(input, bestScore);
 			if (low?(result.bestScore < bestScore):(result.bestScore > bestScore))
 			{
@@ -333,7 +406,19 @@ function go() {
 				best = result.best;
 			}
 			input = generateRandomInput();
+
+			if (!dontUseProcess) {
+				setImmediate(processInput);
+			}
 		}
+		if (typeof process == "object") {
+			processInput(false);
+		} else {
+			while (true) {
+				processInput(true);
+			}
+		}
+
 	});
 
 
