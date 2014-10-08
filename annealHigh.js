@@ -15,6 +15,7 @@ var denoms = {};
 var gcdDict = {};
 
 function generateGCD() {
+	var start = new Date().getTime();
 	for (var i = max; i >= 1; i--) {
 		if (i > 1) {
 			denoms[i] = [1, i];
@@ -22,7 +23,11 @@ function generateGCD() {
 			denoms[i] = [1];
 		}
 	};
+	log("a: " + (new Date().getTime() - start));
+	start = new Date().getTime();
 	var size = global.p.size;
+	log("size: " + size);
+	log("max: " + max);
 	// log(JSON.stringify(denoms, null, 2));
 	for (var i = 2; i <= max; i++) {
 		for (var j = i; j < max; j++) {
@@ -39,19 +44,22 @@ function generateGCD() {
 				d.push(j);
 		};
 	};
-	// for (var i = max; i >= 1; i--) {
-	// 	denoms[i].sort(function (a, b) {
-	// 		  return a - b;
-	// 		});
-	// }
+	log("b: " + (new Date().getTime() - start));
+	start = new Date().getTime();
+	for (var i = max; i >= 1; i--) {
+		denoms[i].sort(function (a, b) {
+			  return a - b;
+			});
+	}
 
 	// log(JSON.stringify(denoms, null, 2));
 	var dict = global.p.gcdDict;
-	for (var i = 1; i <= max; i++) {
-		for (var j = 1; j < max; j++) {
+	for (var i = 1; i <= size; i++) {
+		for (var j = 1; j <= size; j++) {
 			dict[i * 1000 + j] = findGCD(i,j);
 		}
 	}
+	log("c: " + (new Date().getTime() - start));
 };
 
 function index(a, b) {
@@ -136,11 +144,12 @@ function score(d, debug) {
 			out[a] = 0;
 		}
 	}
-
+	var gcdDict = global.p.gcdDict;
 	for (var a = 1; a < size; a++) {
 		var ia = index[a];
 		for (var b = a + 1; b <= size; b++) {
-			var gcd = lookupGCD(a, b);
+			// log("a " + a + " b " + b);
+			var gcd = gcdDict[a * 1000 + b];//lookupGCD(a, b);
 			var ib = index[b];
 			// !debug|| log(a + " = " + ia + ", " + b + " = " + ib);
 			var dist = calcDistance(ia, ib);
