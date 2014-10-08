@@ -50,10 +50,23 @@ function index(a, b) {
 function findGCD(a, b) {
 	var da = denoms[a];
 	var db = denoms[b];
-	var match = da.filter(function(val) {
-		return db.indexOf(val) != -1;
-	});
-	return match[match.length - 1];
+	// var match = da.filter(function(val) {
+	// 	return db.indexOf(val) != -1;
+	// });
+	// return match[match.length - 1];
+	var ia = da.length - 1;
+	var ib = db.length - 1;
+	while(ia >= 0 && ib >= 0) {
+		var va = da[ia];
+		var vb = db[ib];
+		if (va == vb)
+			break;
+		if (va < vb)
+			ib--;
+		else
+			ia--;
+	}
+	return da[ia];
 }
 
 function findDenominators(i) {
@@ -189,7 +202,8 @@ function generateValidTwoIndex() {
 }
 
 
-var n = 3
+var n = (typeof process == "object" && process.argv.length > 2)?parseInt(process.argv[2]):3;
+log("Starting with: " + n);
 var width = n;
 var height = n;
 var size = width * height;//size*size;

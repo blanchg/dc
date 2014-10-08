@@ -16,31 +16,40 @@ var gcdDict = {};
 
 function generateGCD() {
 	for (var i = max; i >= 1; i--) {
-		// log(i);
-		denoms[i] = findDenominators(i);
+		if (i > 1) {
+			denoms[i] = [1, i];
+		} else {
+			denoms[i] = [1];
+		}
 	};
+	var size = global.p.size;
 	// log(JSON.stringify(denoms, null, 2));
 	for (var i = 2; i <= max; i++) {
 		for (var j = i; j < max; j++) {
 			var mul = i * j;
-			if (mul > global.p.size)
+			if (mul > size)
 				break;
 			// log(i + "*" + j + " = " + mul);
-			addDenominator(denoms[mul], i);
-			addDenominator(denoms[mul], j);
+			var d = denoms[mul];
+			// addDenominator(d, i);
+			if (d.indexOf(i) == -1)
+				d.push(i);
+			// addDenominator(d, j);
+			if (d.indexOf(j) == -1)
+				d.push(j);
 		};
 	};
-	for (var i = max; i >= 1; i--) {
-		denoms[i].sort(function (a, b) {
-			  return a - b;
-			});
-	}
+	// for (var i = max; i >= 1; i--) {
+	// 	denoms[i].sort(function (a, b) {
+	// 		  return a - b;
+	// 		});
+	// }
 
 	// log(JSON.stringify(denoms, null, 2));
-
+	var dict = global.p.gcdDict;
 	for (var i = 1; i <= max; i++) {
 		for (var j = 1; j < max; j++) {
-			global.p.gcdDict[index(i,j)] = findGCD(i,j);
+			dict[i * 1000 + j] = findGCD(i,j);
 		}
 	}
 };
@@ -52,10 +61,23 @@ function index(a, b) {
 function findGCD(a, b) {
 	var da = denoms[a];
 	var db = denoms[b];
-	var match = da.filter(function(val) {
-		return db.indexOf(val) != -1;
-	});
-	return match[match.length - 1];
+	// var match = da.filter(function(val) {
+	// 	return db.indexOf(val) != -1;
+	// });
+	// return match[match.length - 1];
+	var ia = da.length - 1;
+	var ib = db.length - 1;
+	while(ia >= 0 && ib >= 0) {
+		var va = da[ia];
+		var vb = db[ib];
+		if (va == vb)
+			break;
+		if (va < vb)
+			ib--;
+		else
+			ia--;
+	}
+	return da[ia];
 }
 
 function findDenominators(i) {
@@ -192,7 +214,7 @@ function generateValidTwoIndex() {
 
 function mutate(a) {
 	var best = a;
-	var bestScore = 100000;
+	var bestScore = Number.MAX_VALUE;
 	for (var i = 0; i < size; i++) {
 		for (var j = i; j < size; j++) {
 			var b = a.concat();
