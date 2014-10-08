@@ -3,8 +3,9 @@ var hasConsole = typeof console == "object";
 var log = hasConsole?console.log.bind(console):print;
 if (typeof require == "function") {
 	browser = false;
-	var Combinatorics = require('./combinatorics.js').Combinatorics;
-	var Parallel = require('./parallel.js');
+	var fs = require('fs');
+	// var Combinatorics = require('./combinatorics.js').Combinatorics;
+	// var Parallel = require('./parallel.js');
 }
 
 // 3..27
@@ -188,8 +189,43 @@ function generateValidTwoIndex() {
 	return result;
 }
 
+function mutate(a) {
+	var best = a;
+	var bestScore = 100000;
+	for (var i = 0; i < size; i++) {
+		for (var j = i; j < size; j++) {
+			var b = a.concat();
+			var k = b[i];
+			b[i] = b[j];
+			b[j] = k;
+			var s = score(b);
+			if (s < bestScore)
+			{
+				bestScore = s;
+				best = b;
+			}
+		};
+	};
 
-var n = 3
+	return {best: best, bestScore: bestScore};
+}
+
+
+function generateRandomInput() {
+	var queue = [];
+	var size = global.p.size;
+	for (var i = 1; i <= size; i++) {
+		queue[i-1] = i;
+	};
+	var result = [];
+	while(queue.length) {
+		result.push(queue.splice(Math.random() * queue.length, 1)[0]);
+	}
+	return result;
+}
+
+var n = (typeof process == "object" && process.argv.length > 2)?parseInt(process.argv[2]):4;
+log("Starting with: " + n);
 var width = n;
 var height = n;
 var size = width * height;//size*size;
@@ -205,6 +241,30 @@ global.p = {
 
 generateGCD();
 
+
+function findBest(input, bestScore) {
+
+	var a = input;
+	var s = score(a);
+	while(true) {
+
+		var s2 = mutate(a);
+		if (s2.bestScore >= s)
+			break;
+		s = s2.bestScore;
+		a = s2.best;
+		if (s < bestScore) {
+			bestScore = s;
+			log("L: " + s, format(a));
+			log(a.join(","));
+
+			fs.appendFileSync('low' + n + '.txt', '\n' + s + '\n' + format(a));
+		}
+	}
+
+	return {best:a,bestScore:bestScore};
+}
+
 // // log(lookupGCD(12, 12));
 // var square = [2, 8, 4, 5, 9, 7, 1, 6, 3];
 // log("Score: " + score(square));
@@ -216,91 +276,30 @@ function go() {
 
 	var input;
 
-	input = generateInput();
+	input = generateRandomInput();
 	// input = [1,9,7,11,10,3,6,14,5,15,12,8,13,2,4,16];
 	log("Input: ", input);
-	var cmb = Combinatorics.permutation(input);
-	log("Length: " + cmb.length);
-	var highestScore = 0;
-	var lowestScore = 1000000;
-	var highest = null;
-	var lowest = null;
-	var parallel = false;
 	var validIndex = generateValidIndex();
 	var validTwoIndex = generateValidTwoIndex();
 	var processed = 0;
 	var start = new Date().getTime();
-	var a = null;
-	
-	while(a = cmb.next()) {
-    // while (a == null) {
 
-		if (validIndex.indexOf(a.indexOf(1)) == -1)
-			continue;
-		var valid = true;
-		var s2 = validTwoIndex.length;
-		for (var i = 2; i <= s2; i++) {
-			if (validTwoIndex.indexOf(a.indexOf(i)) == -1) {
-				valid = false;
-				break;
-			}
-		};
-		if (!valid)
-			continue;
+	var best = input;
+	var bestScore = score(best);
 
-		processed++;
-		// if (parallel) {
-		// 	var job = new Parallel(
-		// 		{problem:a,score:0}, {
-		// 		env: global.p,
-		// 		envNamespace: 'p'
-		// 	}).require(score, lookupGCD, calcDistance, index).spawn(function(data) {
-		// 		data.score = score(data.problem);
-		// 		return data;
-		// 	}).then(function(data) {
-		// 		var s = data.score;
-		// 		var a = data.problem;
-		// 		if (s > highestScore) {
-		// 			highestScore = s;
-		// 			highest = a;
-		// 			log("H: " + s, format(a));
-		// 		}
-		// 		if (s < lowestScore) {
-		// 			lowestScore = s;
-		// 			lowest = a;
-		// 			log("L: " + s, format(a));
-		// 		}	
-		// 	});
-		// } else {
-			var s = score(a);
-			if (s > highestScore) {
-				highestScore = s;
-				highest = a;
-				log("H: " + s, format(a));
-				log(a.join(","));
-			}
-			if (s < lowestScore) {
-				lowestScore = s;
-				lowest = a;
-				log("L: " + s, format(a));
-				log(a.join(","));
-			}
-		// }
-
-		// if (highest)
-		// 	break;
+	while (true) {
+		var result = findBest(input, bestScore);
+		if (result.bestScore < bestScore)
+		{
+			bestScore = result.bestScore;
+			best = result.best;
+		}
+		input = generateRandomInput();
 	}
 
-	log("Highest: " + highestScore);
-	log("  " + format(highest));
-
-	log("Lowest: " + lowestScore);
-	log("  " + format(lowest));
-
-	log("Processed: " + processed);
 	log("Took: " + (new Date().getTime() - start) + " ms");
 
-	log(score(highest, true));
+	log(score(a, true));
 }
 
 if (!browser || !hasConsole)
