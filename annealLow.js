@@ -13,6 +13,9 @@ if (typeof require == "function") {
 
 var denoms = {};
 var gcdDict = {};
+var toX = {};
+var toY = {};
+var distDict = {};
 
 function generateGCD() {
 	var start = new Date().getTime();
@@ -34,7 +37,7 @@ function generateGCD() {
 			var mul = i * j;
 			if (mul > size)
 				break;
-			log(i + "*" + j + " = " + mul);
+			// log(i + "*" + j + " = " + mul);
 			var d = denoms[mul];
 			// addDenominator(d, i);
 			if (d.indexOf(i) == -1)
@@ -109,22 +112,32 @@ function lookupGCD(a, b) {
 	return global.p.gcdDict[a * 1000 + b];
 }
 
+function generatetoX() {
+	for (var i = 0; i < size; i++) {
+		toX[i] = i % width;
+		toY[i] = (i - toX[i]) / width;
+	};
+}
+
+function generateDistDict() {
+	for (var a = 0; a < size; a++) {
+		for (var b = 0; b < size; b++) {
+			distDict[a*1000+b] = calcDistance(a,b);
+		}
+	}
+}
+
 function calcDistance(a, b) {
 	
-	// var ay = Math.floor(a / width);
-	// var ax = a - (ay * width);
-
-	// var by = Math.floor(b / width);
-	// var bx = b - (by * width);
-
 	var width = global.p.width;
-	var ax = a % width;
-	var ay = (a - ax) / width;
-	var bx = b % width;
-	var by = (b - bx) / width;
 
-	var dx = Math.abs(ax - bx);
-	var dy = Math.abs(ay - by);
+	var ax = toX[a];//a % width;
+	var ay = toY[a];
+	var bx = toX[b];//b % width;
+	var by = toY[b];
+
+	var dx = ax-bx;//ax>bx?ax-bx:bx-ax; //Math.abs(ax - bx);
+	var dy = ay-by;//ay>by?ay-by:by-ay; //Math.abs(ay - by);
 	var result = dx * dx + dy * dy;
 	return result;
 }
@@ -132,38 +145,27 @@ function calcDistance(a, b) {
 function score(d, debug) {
 	var result = 0;
 	var index = [-1];
-	for (var i = 0; i < d.length; i++) {
+	var size = global.p.size;
+	var gcdDict = global.p.gcdDict;
+	var distDict = global.p.distDict;
+	for (var i = 0; i < size; i++) {
 		// !debug|| log(d[i] + " at " + i);
 		index[d[i]] = i;
 	};
 
-	// !debug||log(index);
-	var out;
-	!debug||(out = []);
-	var size = global.p.size;
-
-	if (debug) {
-		for (var a = 0; a < size; a++) {
-			out[a] = 0;
-		}
-	}
-
-	var gcdDict = global.p.gcdDict;
 	for (var a = 1; a < size; a++) {
 		var ia = index[a];
+		var a1000 = a * 1000;
+		var ia1000 = ia * 1000;
+
 		for (var b = a + 1; b <= size; b++) {
-			var gcd = gcdDict[a * 1000 + b];//lookupGCD(a, b);
+			var gcd = gcdDict[a1000 + b];//lookupGCD(a, b);
 			var ib = index[b];
-			// !debug|| log(a + " = " + ia + ", " + b + " = " + ib);
-			var dist = calcDistance(ia, ib);
+			var dist = distDict[ia1000 + ib];//calcDistance(ia, ib);
 			var dab = gcd * dist;
-			!debug|| (out[ia] += dab);
-			!debug|| (out[ib] += dab);
 			result += dab;
 		};
 	};
-
-	!debug||log("" + out.join(","));
 
 	return result;
 }
@@ -226,18 +228,26 @@ function generateValidTwoIndex() {
 
 function mutate(a) {
 	var best = a;
+	var b = a.concat();
 	var bestScore = Number.MAX_VALUE;
 	for (var i = 0; i < size; i++) {
 		for (var j = i; j < size; j++) {
-			var b = a.concat();
-			var k = b[i];
-			b[i] = b[j];
-			b[j] = k;
+			b[i] = a[j];
+			b[j] = a[i];
 			var s = score(b);
 			if (s < bestScore)
 			{
+				// Only 
 				bestScore = s;
 				best = b;
+				for (var k = 0; k < size; k++) {
+					b[k] = a[k];
+				};
+				// b = a.concat();
+			} else {
+				// reset
+				b[i] = a[i];
+				b[j] = a[j];
 			}
 		};
 	};
@@ -275,19 +285,25 @@ global.p = {
 	gcdDict: gcdDict,
 	width: width,
 	height: height,
-	max: max
+	max: max,
+	distDict: distDict
 }
 
 generateGCD();
+generatetoX();
+generateDistDict();
 
 
 function findBest(input, bestScore) {
 
 	var a = input;
 	var s = score(a);
+	log("Starting: " + s, format(a));
+	fs.appendFileSync('low' + n + '.txt', '\nStarting\n' + s + '\n' + format(a));
 	while(true) {
-
+		start = new Date().getTime();
 		var s2 = mutate(a);
+		log("Took: " + (new Date().getTime() - start) + " ms to mutate");
 		if (s2.bestScore >= s)
 			break;
 		s = s2.bestScore;

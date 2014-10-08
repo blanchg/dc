@@ -13,6 +13,9 @@ if (typeof require == "function") {
 
 var denoms = {};
 var gcdDict = {};
+var toX = {};
+var toY = {};
+var distDict = {};
 
 function generateGCD() {
 	var start = new Date().getTime();
@@ -66,7 +69,7 @@ function index(a, b) {
 	return a * 1000 + b;
 }
 
-function findGCD(a, b) {
+function findGCD(a, b, debug) {
 	var da = denoms[a];
 	var db = denoms[b];
 	// var match = da.filter(function(val) {
@@ -76,8 +79,11 @@ function findGCD(a, b) {
 	var ia = da.length - 1;
 	var ib = db.length - 1;
 	while(ia >= 0 && ib >= 0) {
+		!debug||log("i " + ia + " , " + ib);
 		var va = da[ia];
 		var vb = db[ib];
+
+		!debug||log("  " + va + " , " + vb);
 		if (va == vb)
 			break;
 		if (va < vb)
@@ -106,22 +112,32 @@ function lookupGCD(a, b) {
 	return global.p.gcdDict[a * 1000 + b];
 }
 
+function generatetoX() {
+	for (var i = 0; i < size; i++) {
+		toX[i] = i % width;
+		toY[i] = (i - toX[i]) / width;
+	};
+}
+
+function generateDistDict() {
+	for (var a = 0; a < size; a++) {
+		for (var b = 0; b < size; b++) {
+			distDict[a*1000+b] = calcDistance(a,b);
+		}
+	}
+}
+
 function calcDistance(a, b) {
 	
-	// var ay = Math.floor(a / width);
-	// var ax = a - (ay * width);
-
-	// var by = Math.floor(b / width);
-	// var bx = b - (by * width);
-
 	var width = global.p.width;
-	var ax = a % width;
-	var ay = (a - ax) / width;
-	var bx = b % width;
-	var by = (b - bx) / width;
 
-	var dx = Math.abs(ax - bx);
-	var dy = Math.abs(ay - by);
+	var ax = toX[a];//a % width;
+	var ay = toY[a];
+	var bx = toX[b];//b % width;
+	var by = toY[b];
+
+	var dx = ax-bx;//ax>bx?ax-bx:bx-ax; //Math.abs(ax - bx);
+	var dy = ay-by;//ay>by?ay-by:by-ay; //Math.abs(ay - by);
 	var result = dx * dx + dy * dy;
 	return result;
 }
@@ -129,38 +145,27 @@ function calcDistance(a, b) {
 function score(d, debug) {
 	var result = 0;
 	var index = [-1];
-	for (var i = 0; i < d.length; i++) {
+	var size = global.p.size;
+	var gcdDict = global.p.gcdDict;
+	var distDict = global.p.distDict;
+	for (var i = 0; i < size; i++) {
 		// !debug|| log(d[i] + " at " + i);
 		index[d[i]] = i;
 	};
 
-	// !debug||log(index);
-	var out;
-	!debug||(out = []);
-	var size = global.p.size;
-
-	if (debug) {
-		for (var a = 0; a < size; a++) {
-			out[a] = 0;
-		}
-	}
-	var gcdDict = global.p.gcdDict;
 	for (var a = 1; a < size; a++) {
 		var ia = index[a];
+		var a1000 = a * 1000;
+		var ia1000 = ia * 1000;
+
 		for (var b = a + 1; b <= size; b++) {
-			// log("a " + a + " b " + b);
-			var gcd = gcdDict[a * 1000 + b];//lookupGCD(a, b);
+			var gcd = gcdDict[a1000 + b];//lookupGCD(a, b);
 			var ib = index[b];
-			// !debug|| log(a + " = " + ia + ", " + b + " = " + ib);
-			var dist = calcDistance(ia, ib);
+			var dist = distDict[ia1000 + ib];//calcDistance(ia, ib);
 			var dab = gcd * dist;
-			!debug|| (out[ia] += dab);
-			!debug|| (out[ib] += dab);
 			result += dab;
 		};
 	};
-
-	!debug||log("" + out.join(","));
 
 	return result;
 }
@@ -223,25 +228,32 @@ function generateValidTwoIndex() {
 
 function mutate(a) {
 	var best = a;
+	var b = a.concat();
 	var bestScore = 0;
 	for (var i = 0; i < size; i++) {
 		for (var j = i; j < size; j++) {
-			var b = a.concat();
-			var k = b[i];
-			b[i] = b[j];
-			b[j] = k;
+			b[i] = a[j];
+			b[j] = a[i];
 			var s = score(b);
 			if (s > bestScore)
 			{
+				// Only 
 				bestScore = s;
 				best = b;
+				for (var k = 0; k < size; k++) {
+					b[k] = a[k];
+				};
+				// b = a.concat();
+			} else {
+				// reset
+				b[i] = a[i];
+				b[j] = a[j];
 			}
 		};
 	};
 
 	return {best: best, bestScore: bestScore};
 }
-
 
 
 function generateRandomInput() {
@@ -257,7 +269,7 @@ function generateRandomInput() {
 	return result;
 }
 
-var n = (typeof process == "object" && process.argv.length > 2)?parseInt(process.argv[2]):3;
+var n = (typeof process == "object" && process.argv.length > 2)?parseInt(process.argv[2]):4;
 log("Starting with: " + n);
 var width = n;
 var height = n;
@@ -273,12 +285,40 @@ global.p = {
 	gcdDict: gcdDict,
 	width: width,
 	height: height,
-	max: max
+	max: max,
+	distDict: distDict
 }
 
-var start = new Date().getTime();
 generateGCD();
-log("Took: " + (new Date().getTime() - start) + " ms to generate gcd");
+generatetoX();
+generateDistDict();
+
+
+function findBest(input, bestScore) {
+
+	var a = input;
+	var s = score(a);
+	log("Starting: " + s, format(a));
+	fs.appendFileSync('high' + n + '.txt', '\nStarting\n' + s + '\n' + format(a));
+	while(true) {
+		start = new Date().getTime();
+		var s2 = mutate(a);
+		log("Took: " + (new Date().getTime() - start) + " ms to mutate");
+		if (s2.bestScore <= s)
+			break;
+		s = s2.bestScore;
+		a = s2.best;
+		if (s > bestScore) {
+			bestScore = s;
+			log("L: " + s, format(a));
+			log(a.join(","));
+
+			fs.appendFileSync('low' + n + '.txt', '\n' + s + '\n' + format(a));
+		}
+	}
+
+	return {best:a,bestScore:bestScore};
+}
 
 // // log(lookupGCD(12, 12));
 // var square = [2, 8, 4, 5, 9, 7, 1, 6, 3];
@@ -286,29 +326,6 @@ log("Took: " + (new Date().getTime() - start) + " ms to generate gcd");
 
 // log("Format: " + format(square))
 // log(calcDistance(5, 3));
-
-function findBest(input, bestScore) {
-
-	var a = input;
-	var s = score(a);
-	while(true) {
-
-		var s2 = mutate(a);
-		if (s2.bestScore <= s)
-			break;
-		s = s2.bestScore;
-		a = s2.best;
-		if (s > bestScore) {
-			bestScore = s;
-			log("H: " + s, format(a));
-			log(a.join(","));
-
-			fs.appendFileSync('high' + n + '.txt', '\n' + s + '\n' + format(a));
-		}
-	}
-
-	return {best:a,bestScore:bestScore};
-}
 
 function go() {
 
@@ -321,6 +338,9 @@ function go() {
 	// var validTwoIndex = generateValidTwoIndex();
 	// var processed = 0;
 	// var start = new Date().getTime();
+
+	log("GCD:", findGCD(16, 8, true));
+	// return;
 
 	var best = input;
 	var bestScore = score(best);
@@ -335,10 +355,9 @@ function go() {
 		input = generateRandomInput();
 	}
 
-
 	// log("Took: " + (new Date().getTime() - start) + " ms");
 
-	// log(score(best, true));
+	// log(score(a, true));
 }
 
 if (!browser || !hasConsole)
