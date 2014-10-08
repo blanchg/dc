@@ -236,19 +236,22 @@ generatetoX();
 generateDistDict();
 
 
-function findBest(input, bestScore) {
+function findBest(input, bestScore, cb) {
 
 	var a = input;
 	var s = score(a);
 	var low = global.p.low;
 	var filename = global.p.filename;
-	while(true) {
-		// start = new Date().getTime();
+
+
+	function processInput(dontUseProcess) {
 		var s2 = mutate(a);
 		// log("Took: " + (new Date().getTime() - start) + " ms to mutate");
 		// log("Best mutation: " + s2.bestScore + " vs " + s);
-		if (low?(s2.bestScore >= s):(s2.bestScore <= s))
-			break;
+		if (low?(s2.bestScore >= s):(s2.bestScore <= s)) {
+			cb({best:a,bestScore:bestScore});
+			return;
+		}
 		s = s2.bestScore;
 		a = s2.best;
 		if (low?(s < bestScore):(s > bestScore)) {
@@ -258,9 +261,19 @@ function findBest(input, bestScore) {
 
 			fs.appendFileSync(filename, '\n' + s + '\n' + format(a));
 		}
+		if (!dontUseProcess) {
+			setImmediate(processInput);
+		}
+	}
+	if (typeof process == "object") {
+		processInput(false);
+	} else {
+		while (true) {
+			processInput(true);
+		}
 	}
 
-	return {best:a,bestScore:bestScore};
+
 }
 
 // // log(lookupGCD(12, 12));
@@ -349,7 +362,7 @@ var bestScore = 0;
 var path = "#contentContainer > fieldset > table:nth-child(3)"
 
 function checkRecord() {
-	// log("Checking if should record: " + lastPostedScore + " == " + bestScore)
+	log("Checking if should record: " + lastPostedScore + " == " + bestScore)
 	if (lastPostedScore == bestScore) {
 		setTimeout(checkRecord, 10000).unref();
 		return;
@@ -395,21 +408,23 @@ function go() {
 
 
 		log("Creating record timer");
-		setTimeout(checkRecord, 10000).unref();
+		setTimeout(checkRecord, 1000).unref();
 		// timer.unref();
 
 		function processInput(dontUseProcess) {
-			var result = findBest(input, bestScore);
-			if (low?(result.bestScore < bestScore):(result.bestScore > bestScore))
-			{
-				bestScore = result.bestScore;
-				best = result.best;
-			}
-			input = generateRandomInput();
+			findBest(input, bestScore, function(result) {
 
-			if (!dontUseProcess) {
-				setImmediate(processInput);
-			}
+				if (low?(result.bestScore < bestScore):(result.bestScore > bestScore))
+				{
+					bestScore = result.bestScore;
+					best = result.best;
+				}
+				input = generateRandomInput();
+
+				if (!dontUseProcess) {
+					setImmediate(processInput);
+				}
+			});
 		}
 		if (typeof process == "object") {
 			processInput(false);
