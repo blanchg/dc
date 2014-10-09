@@ -345,8 +345,7 @@ function record(score, input) {
 			form: {
 				rawText: result,
 				submit: "Submit Entry"
-			},
-			proxy: "http://blancgp:Tester999@proxy.cat.com:80"
+			}
 		},
 		function (err, response, body) {
 			if (err) {
