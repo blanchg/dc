@@ -236,7 +236,7 @@ generatetoX();
 generateDistDict();
 
 
-function findBest(input, bestScore, cb) {
+function findBest(input, inputScore, cb) {
 
 	var a = input;
 	var s = score(a);
@@ -249,17 +249,24 @@ function findBest(input, bestScore, cb) {
 		// log("Took: " + (new Date().getTime() - start) + " ms to mutate");
 		// log("Best mutation: " + s2.bestScore + " vs " + s);
 		if (low?(s2.bestScore >= s):(s2.bestScore <= s)) {
-			cb({best:a,bestScore:bestScore});
+			cb();
 			return;
 		}
 		s = s2.bestScore;
 		a = s2.best;
-		if (low?(s < bestScore):(s > bestScore)) {
-			bestScore = s;
+		if (low?(s < inputScore):(s > inputScore)) {
+			inputScore = s;
 			log(s, format(a));
 			log(a.join(","));
 
 			fs.appendFileSync(filename, '\n' + s + '\n' + format(a));
+
+			if (low?(s < bestScore):(s > bestScore))
+			{
+				bestScore = s;
+				best = a;
+			}
+
 		}
 		if (!dontUseProcess) {
 			setImmediate(processInput);
@@ -412,13 +419,8 @@ function go() {
 		// timer.unref();
 
 		function processInput(dontUseProcess) {
-			findBest(input, bestScore, function(result) {
+			findBest(input, bestScore, function() {
 
-				if (low?(result.bestScore < bestScore):(result.bestScore > bestScore))
-				{
-					bestScore = result.bestScore;
-					best = result.best;
-				}
 				input = generateRandomInput();
 
 				if (!dontUseProcess) {
